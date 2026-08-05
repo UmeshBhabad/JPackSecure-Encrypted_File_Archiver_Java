@@ -1,88 +1,106 @@
-import java.io.File;
-import java.util.Scanner;
-import java.io.FileReader;
+// Final code of File Packer
+
+import java.io.*;
+import java.util.*;
 
 class FilePacker
 {
-    public static void main(String[] A)
+    public static void main(String A[]) throws Exception                                            // Main Method
     {
-        String FolderName = "";
-        String PackFileName = "";
+        // Encryption Key
+        byte Key = 0x11;
 
-        String[] ValidExtension = {".txt", ".java", ".c", ".cpp"};
-
-        boolean bRet = false;
-
-        File DirObj = null;
-        File PFileObj = null;
-
-        File[] FileArr = null;
+        // Local Variable
+        String Header = null;                                                                       
         
+        int iRet = 0;
+        int i = 0, j = 0;
+
+        byte Buffer[] = new byte[1024];
+        byte bHeader[] = new byte[100];
+
+        String FolderName = null;
+        String PackName = null;
+
+        // File class Object
+        File fobj = null;
+        File PackObj = null;
+
+        // FileOutputStream class object
+        FileOutputStream foobj = null;
+
+        // FileInputStream Class object
+        FileInputStream fiobj = null;
+
+        // Scanner class object
         Scanner sobj = new Scanner(System.in);
 
-        System.out.println("Enter the Folder name : ");
+        // Accept Folder name
+        System.out.println("Enter the name of folder :");
         FolderName = sobj.nextLine();
 
-        System.out.println("Enter the Pack File name : ");
-        PackFileName = sobj.nextLine();
+        // Accept File name
+        System.out.println("Enter the name of file :");
+        PackName = sobj.nextLine();
 
-        DirObj = new File(FolderName);
+        fobj = new File(FolderName);                                                                // Object Instantiation
 
-        if(DirObj.exists() && DirObj.isDirectory())
+        if(fobj.exists() && fobj.isDirectory())     // Directory present
         {
-            System.out.println("Folder is present");
+            PackObj = new File(PackName);                                                           // Object Instantiation
 
-            PFileObj = new File(PackFileName);
+            PackObj.createNewFile();                                                                // Create new file
 
-            bRet = PFileObj.exists();
+            foobj = new FileOutputStream(PackObj);                                                  // object Instantiation
 
-            if(bRet)
+            System.out.println("Folder is present.");
+
+            File fArr[] = fobj.listFiles();                                                         // Array of files
+
+            System.out.println("Number of files in the folder are : "+fArr.length);                 // Display Array length()
+            
+            // 
+            for(i = 0; i < fArr.length; i++)    // traverse throuth directory
             {
-                System.out.println("File is already present");
-            }
-            else
-            {
-                try
+                fiobj = new FileInputStream(fArr[i]);                                               // Object Instantiation
+
+                if (fArr[i].getName().endsWith(".txt"))     // .txt files
                 {
-                    bRet = PFileObj.createNewFile();
+                    // Header formation
+                    Header = fArr[i].getName() + " "+ fArr[i].length();                             // File Header
 
-                    if(bRet == false)
+                    for (j = Header.length(); j < 100; j++)
                     {
-                        System.out.println("Unable to create PackFile");
-                        return;
+                        Header = Header + " ";
                     }
-                    else
+
+                    bHeader = Header.getBytes();                                                    // String into byte
+
+                    // Write header into pack file
+                    foobj.write(bHeader, 0,100);                                                    // write Header into pack file
+
+                    // Read the data from the input files from Marvellous folder
+                    while((iRet = fiobj.read(Buffer)) != -1)    // read data from file
                     {
-                        System.out.println("File gets created sucessfully");
-                    }
+                        // Encryption logic
+                        for(j = 0; j < iRet; j++)
+                        {
+                            Buffer[j] = (byte)(Buffer[j] ^ Key);
+                        }
+
+                        // Write the file data into pack file
+                        foobj.write(Buffer, 0, iRet);
+                    }   
                 }
-                catch(Exception e)
-                {
-                    System.out.println(e);
-                }
+                
+                fiobj.close();
             }
-
-            FileArr = DirObj.listFiles();
-
-            /*
-            Display All files from Directory
-
-            for(File f : FileArr)
-            {
-                System.out.println("File Name : "+f.getName());
-            }
-            */
-
-            System.out.println("Number of Files in Directory : "+FileArr.length);
-
-            for(File f : FileArr)
-            {
-                System.out.println("File Name : "+ f.getName() + "\t" +"File Size : " + f.length());
-            }
+            foobj.close();
         }
-        else
+        else        // Directory Absent
         {
-            System.out.println("There is no such folder");
+            System.out.println("There is no such folder.");
         }
+        sobj.close();        
     }
 }
